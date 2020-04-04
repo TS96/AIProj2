@@ -17,6 +17,7 @@ import numpy as np
 import torch
 from metrics.metrics import confusion_matrix
 
+
 # continuum iterator #########################################################
 
 
@@ -87,6 +88,7 @@ class Continuum:
             j = torch.LongTensor(j)
             return self.data[ti][1][j], ti, self.data[ti][2][j]
 
+
 # train handle ###############################################################
 
 
@@ -98,7 +100,7 @@ def eval_tasks(model, tasks, args):
         x = task[1]
         y = task[2]
         rt = 0
-        
+
         eval_bs = x.size(0)
 
         for b_from in range(0, x.size(0), eval_bs):
@@ -127,7 +129,7 @@ def life_experience(model, continuum, x_te, args):
     time_start = time.time()
 
     for (i, (x, t, y)) in enumerate(continuum):
-        if(((i % args.log_every) == 0) or (t != current_task)):
+        if (((i % args.log_every) == 0) or (t != current_task)):
             result_a.append(eval_tasks(model, x_te, args))
             result_t.append(current_task)
             current_task = t

@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import matplotlib as mpl
+
 mpl.use('Agg')
 
 # if 'roman' in mpl.font_manager.weight_dict.keys():
@@ -20,11 +21,11 @@ import numpy as np
 import torch
 
 models = ['single', 'independent', 'multimodal', 'icarl', 'ewc', 'gem']
-datasets = ['mnist_permutations', 'mnist_rotations', 'cifar100']
+datasets = ['mnist_rotations']
 
-names_datasets = {'mnist_permutations': 'MNIST permutations',
-                  'mnist_rotations': 'MNIST rotations',
-                  'cifar100': 'CIFAR-100'}
+names_datasets = {
+    'mnist_rotations': 'MNIST rotations'
+}
 
 names_models = {'single': 'single',
                 'independent': 'independent',
@@ -108,7 +109,7 @@ for dataset in datasets:
 
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
-    #plt.xlabel('task number', fontsize=16)
+    # plt.xlabel('task number', fontsize=16)
     plt.title(names_datasets[dataset], fontsize=16)
     plt.tight_layout()
     plt.savefig('evoplot_%s.pdf' % dataset, bbox_inches='tight')

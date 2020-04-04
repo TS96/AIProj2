@@ -13,19 +13,16 @@ import quadprog
 
 from .common import MLP, ResNet18
 
+
 # Auxiliary functions useful for GEM's inner optimization.
 
-def compute_offsets(task, nc_per_task, is_cifar):
+def compute_offsets(task, nc_per_task):
     """
         Compute offsets for cifar to determine which
         outputs to select for a given task.
     """
-    if is_cifar:
-        offset1 = task * nc_per_task
-        offset2 = (task + 1) * nc_per_task
-    else:
-        offset1 = 0
-        offset2 = nc_per_task
+    offset1 = 0
+    offset2 = nc_per_task
     return offset1, offset2
 
 
@@ -99,11 +96,7 @@ class Net(nn.Module):
         super(Net, self).__init__()
         nl, nh = args.n_layers, args.n_hiddens
         self.margin = args.memory_strength
-        self.is_cifar = (args.data_file == 'cifar100.pt')
-        if self.is_cifar:
-            self.net = ResNet18(n_outputs)
-        else:
-            self.net = MLP([n_inputs] + [nh] * nl + [n_outputs])
+        self.net = MLP([n_inputs] + [nh] * nl + [n_outputs])
 
         self.ce = nn.CrossEntropyLoss()
         self.n_outputs = n_outputs
@@ -133,21 +126,10 @@ class Net(nn.Module):
         self.observed_tasks = []
         self.old_task = -1
         self.mem_cnt = 0
-        if self.is_cifar:
-            self.nc_per_task = int(n_outputs / n_tasks)
-        else:
-            self.nc_per_task = n_outputs
+        self.nc_per_task = n_outputs
 
     def forward(self, x, t):
         output = self.net(x)
-        if self.is_cifar:
-            # make sure we predict classes within the current task
-            offset1 = int(t * self.nc_per_task)
-            offset2 = int((t + 1) * self.nc_per_task)
-            if offset1 > 0:
-                output[:, :offset1].data.fill_(-10e10)
-            if offset2 < self.n_outputs:
-                output[:, offset2:self.n_outputs].data.fill_(-10e10)
         return output
 
     def observe(self, x, t, y):
@@ -178,8 +160,7 @@ class Net(nn.Module):
                 # fwd/bwd on the examples in the memory
                 past_task = self.observed_tasks[tt]
 
-                offset1, offset2 = compute_offsets(past_task, self.nc_per_task,
-                                                   self.is_cifar)
+                offset1, offset2 = compute_offsets(past_task, self.nc_per_task)
                 ptloss = self.ce(
                     self.forward(
                         self.memory_data[past_task],
@@ -192,7 +173,7 @@ class Net(nn.Module):
         # now compute the grad on the current minibatch
         self.zero_grad()
 
-        offset1, offset2 = compute_offsets(t, self.nc_per_task, self.is_cifar)
+        offset1, offset2 = compute_offsets(t, self.nc_per_task)
         loss = self.ce(self.forward(x, t)[:, offset1: offset2], y - offset1)
         loss.backward()
 

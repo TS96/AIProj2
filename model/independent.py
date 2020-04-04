@@ -20,19 +20,12 @@ class Net(torch.nn.Module):
         self.nets = torch.nn.ModuleList()
         self.opts = []
 
-        self.is_cifar = (args.data_file == 'cifar100.pt')
-        if self.is_cifar:
-            self.nc_per_task = n_outputs / n_tasks
         self.n_outputs = n_outputs
 
         # setup network
         for _ in range(n_tasks):
-            if self.is_cifar:
-                self.nets.append(
-                    ResNet18(int(n_outputs / n_tasks), int(20 / n_tasks)))
-            else:
-                self.nets.append(
-                    MLP([n_inputs] + [int(nh / n_tasks)] * nl + [n_outputs]))
+            self.nets.append(
+                MLP([n_inputs] + [int(nh / n_tasks)] * nl + [n_outputs]))
 
         # setup optimizer
         for t in range(n_tasks):
@@ -48,16 +41,7 @@ class Net(torch.nn.Module):
 
     def forward(self, x, t):
         output = self.nets[t](x)
-        if self.is_cifar:
-            bigoutput = torch.Tensor(x.size(0), self.n_outputs)
-            if self.gpu:
-                bigoutput = bigoutput.cuda()
-            bigoutput.fill_(-10e10)
-            bigoutput[:, int(t * self.nc_per_task): int((t + 1) * self.nc_per_task)].copy_(
-                output.data)
-            return bigoutput
-        else:
-            return output
+        return output
 
     def observe(self, x, t, y):
         # detect beginning of a new task
@@ -70,8 +54,5 @@ class Net(torch.nn.Module):
 
         self.train()
         self.zero_grad()
-        if self.is_cifar:
-            self.bce(self.nets[t](x), y - int(t * self.nc_per_task)).backward()
-        else:
-            self.bce(self(x, t), y).backward()
+        self.bce(self(x, t), y).backward()
         self.opts[t].step()
