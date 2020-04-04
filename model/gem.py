@@ -11,21 +11,10 @@ import torch.optim as optim
 import numpy as np
 import quadprog
 
-from .common import MLP, ResNet18
+from .common import MLP
 
 
 # Auxiliary functions useful for GEM's inner optimization.
-
-def compute_offsets(task, nc_per_task):
-    """
-        Compute offsets for cifar to determine which
-        outputs to select for a given task.
-    """
-    offset1 = 0
-    offset2 = nc_per_task
-    return offset1, offset2
-
-
 def store_grad(pp, grads, grad_dims, tid):
     """
         This stores parameter gradients of past tasks.
@@ -92,25 +81,25 @@ class Net(nn.Module):
                  n_inputs,
                  n_outputs,
                  n_tasks,
-                 args):
+                 n_layers, n_hiddens, memory_strength, lr, n_memories, cuda):
         super(Net, self).__init__()
-        nl, nh = args.n_layers, args.n_hiddens
-        self.margin = args.memory_strength
+        nl, nh = n_layers, n_hiddens
+        self.margin = memory_strength
         self.net = MLP([n_inputs] + [nh] * nl + [n_outputs])
 
         self.ce = nn.CrossEntropyLoss()
         self.n_outputs = n_outputs
 
-        self.opt = optim.SGD(self.parameters(), args.lr)
+        self.opt = optim.SGD(self.parameters(), lr)
 
-        self.n_memories = args.n_memories
-        self.gpu = args.cuda
+        self.n_memories = n_memories
+        self.gpu = cuda
 
         # allocate episodic memory
         self.memory_data = torch.FloatTensor(
             n_tasks, self.n_memories, n_inputs)
         self.memory_labs = torch.LongTensor(n_tasks, self.n_memories)
-        if args.cuda:
+        if cuda:
             self.memory_data = self.memory_data.cuda()
             self.memory_labs = self.memory_labs.cuda()
 
@@ -119,7 +108,7 @@ class Net(nn.Module):
         for param in self.parameters():
             self.grad_dims.append(param.data.numel())
         self.grads = torch.Tensor(sum(self.grad_dims), n_tasks)
-        if args.cuda:
+        if cuda:
             self.grads = self.grads.cuda()
 
         # allocate counters
@@ -160,7 +149,7 @@ class Net(nn.Module):
                 # fwd/bwd on the examples in the memory
                 past_task = self.observed_tasks[tt]
 
-                offset1, offset2 = compute_offsets(past_task, self.nc_per_task)
+                offset1, offset2 = 0, self.nc_per_task
                 ptloss = self.ce(
                     self.forward(
                         self.memory_data[past_task],
@@ -173,7 +162,7 @@ class Net(nn.Module):
         # now compute the grad on the current minibatch
         self.zero_grad()
 
-        offset1, offset2 = compute_offsets(t, self.nc_per_task)
+        offset1, offset2 = 0, self.nc_per_task
         loss = self.ce(self.forward(x, t)[:, offset1: offset2], y - offset1)
         loss.backward()
 

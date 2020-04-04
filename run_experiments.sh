@@ -1,7 +1,6 @@
 #!/bin/bash
 
 MY_PYTHON="python"
-MNIST_ROTA="--n_layers 2 --n_hiddens 100 --data_path data/ --save_path results/ --batch_size 10 --log_every 100 --samples_per_task 1000 --data_file mnist_rotations.pt    --cuda no  --seed 0"
 
 # build datasets
 cd data/
@@ -20,22 +19,5 @@ $MY_PYTHON mnist_rotations.py \
 
 cd ..
 
-# model "single"
-$MY_PYTHON main.py $MNIST_ROTA --model single --lr 0.003 --cuda yes
-
-# model "independent"
-$MY_PYTHON main.py $MNIST_ROTA --model independent --lr 0.1  --finetune yes --cuda yes
-
-# model "multimodal"
-$MY_PYTHON main.py $MNIST_ROTA  --model multimodal --lr 0.1 --cuda yes
-
-# model "EWC"
-$MY_PYTHON main.py $MNIST_ROTA --model ewc --lr 0.01 --n_memories 1000 --memory_strength 1000 --cuda yes
-
 # model "GEM"
-$MY_PYTHON main.py $MNIST_ROTA --model gem --lr 0.1 --n_memories 256 --memory_strength 0.5 --cuda yes
-
-# plot results
-cd results/
-$MY_PYTHON plot_results.py
-cd ..
+$MY_PYTHON main.py
