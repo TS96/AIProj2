@@ -6,7 +6,6 @@
 
 from torchvision import transforms
 from PIL import Image
-import argparse
 import os.path
 import random
 import torch
@@ -22,35 +21,29 @@ def rotate_dataset(d, rotation):
     return result
 
 
-parser = argparse.ArgumentParser()
+input_directory = 'raw/'
+output_file = 'mnist_rotations.pt'
+tasks_num = 20
+min_rotation = 0
+max_rotation = 180
+random_seed = 0
 
-parser.add_argument('--i', default='raw/', help='input directory')
-parser.add_argument('--o', default='mnist_rotations.pt', help='output file')
-parser.add_argument('--n_tasks', default=10, type=int, help='number of tasks')
-parser.add_argument('--min_rot', default=0.,
-                    type=float, help='minimum rotation')
-parser.add_argument('--max_rot', default=90.,
-                    type=float, help='maximum rotation')
-parser.add_argument('--seed', default=0, type=int, help='random seed')
-
-args = parser.parse_args()
-
-torch.manual_seed(args.seed)
+torch.manual_seed(random_seed)
 
 tasks_tr = []
 tasks_te = []
 
-x_tr, y_tr = torch.load(os.path.join(args.i, 'mnist_train.pt'))
-x_te, y_te = torch.load(os.path.join(args.i, 'mnist_test.pt'))
+x_tr, y_tr = torch.load(os.path.join(input_directory, 'mnist_train.pt'))
+x_te, y_te = torch.load(os.path.join(input_directory, 'mnist_test.pt'))
 
-for t in range(args.n_tasks):
-    min_rot = 1.0 * t / args.n_tasks * (args.max_rot - args.min_rot) + \
-        args.min_rot
-    max_rot = 1.0 * (t + 1) / args.n_tasks * \
-        (args.max_rot - args.min_rot) + args.min_rot
+for t in range(tasks_num):
+    min_rot = 1.0 * t / tasks_num * (max_rotation - min_rotation) + \
+              min_rotation
+    max_rot = 1.0 * (t + 1) / tasks_num * \
+              (max_rotation - min_rotation) + min_rotation
     rot = random.random() * (max_rot - min_rot) + min_rot
 
     tasks_tr.append([rot, rotate_dataset(x_tr, rot), y_tr])
     tasks_te.append([rot, rotate_dataset(x_te, rot), y_te])
 
-torch.save([tasks_tr, tasks_te], args.o)
+torch.save([tasks_tr, tasks_te], output_file)

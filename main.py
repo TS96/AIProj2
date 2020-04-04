@@ -216,7 +216,3 @@ if __name__ == "__main__":
     stats = confusion_matrix(result_t, result_a, fname + '.txt')
     one_liner = ' '.join(["%.3f" % stat for stat in stats])
     print(fname + ': ' + one_liner + ' # ' + str(spent_time))
-
-    # save all results in binary file
-    torch.save((result_t, result_a, model.state_dict(),
-                stats, one_liner), fname + '.pt')
