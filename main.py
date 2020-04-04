@@ -8,7 +8,6 @@ import importlib
 import datetime
 import argparse
 import random
-import uuid
 import time
 import os
 
@@ -174,9 +173,6 @@ if __name__ == "__main__":
     samples_per_task = 1000
     shuffle_tasks = False
 
-    # unique identifier
-    uid = uuid.uuid4().hex
-
     # initialize seeds
     torch.backends.cudnn.enabled = False
     torch.manual_seed(random_seed)
@@ -209,10 +205,9 @@ if __name__ == "__main__":
 
     fname = model_name + '_' + data_file + '_'
     fname += datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-    fname += '_' + uid
     fname = os.path.join(save_path, fname)
 
     # save confusion matrix and print one line of stats
     stats = confusion_matrix(result_t, result_a, fname + '.txt')
     one_liner = ' '.join(["%.3f" % stat for stat in stats])
-    print(fname + ': ' + one_liner + ' # ' + str(spent_time))
+    print("{} {}".format(model_name, "MNIST Rotation") + ': ' + one_liner + ' # Spent time:' + str(spent_time))

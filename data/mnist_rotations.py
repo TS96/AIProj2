@@ -6,7 +6,6 @@
 
 from torchvision import transforms
 from PIL import Image
-import os.path
 import random
 import torch
 
@@ -21,7 +20,6 @@ def rotate_dataset(d, rotation):
     return result
 
 
-input_directory = 'raw/'
 output_file = 'mnist_rotations.pt'
 tasks_num = 20
 min_rotation = 0
@@ -33,8 +31,8 @@ torch.manual_seed(random_seed)
 tasks_tr = []
 tasks_te = []
 
-x_tr, y_tr = torch.load(os.path.join(input_directory, 'mnist_train.pt'))
-x_te, y_te = torch.load(os.path.join(input_directory, 'mnist_test.pt'))
+x_tr, y_tr = torch.load('mnist_train.pt')
+x_te, y_te = torch.load('mnist_test.pt')
 
 for t in range(tasks_num):
     min_rot = 1.0 * t / tasks_num * (max_rotation - min_rotation) + \
