@@ -153,7 +153,6 @@ def life_experience(model, continuum, x_te, log_every, cuda):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Continuum learning')
 
     # model parameters
     model_name = "gem"
